@@ -1,7 +1,10 @@
 import 'dart:convert';
 
+import 'package:buscador_de_gif/ui/gif_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:share/share.dart';
+import 'package:transparent_image/transparent_image.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key key}) : super(key: key);
@@ -47,16 +50,16 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.black,
       body: Column(
         children: [
-          Padding(padding: EdgeInsets.all(10),
+          Padding(
+            padding: EdgeInsets.all(10),
             child: TextField(
               decoration: InputDecoration(
                   labelText: "Pesquise Aqui",
                   labelStyle: TextStyle(color: Colors.white),
-                  border: OutlineInputBorder()
-              ),
+                  border: OutlineInputBorder()),
               style: TextStyle(color: Colors.white, fontSize: 18),
               textAlign: TextAlign.center,
-              onSubmitted: (text){
+              onSubmitted: (text) {
                 setState(() {
                   _search = text;
                   _offset = 0;
@@ -64,7 +67,8 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-          Expanded(child: FutureBuilder(
+          Expanded(
+              child: FutureBuilder(
             future: _getGifs(),
             builder: (context, snapshot) {
               switch (snapshot.connectionState) {
@@ -91,38 +95,60 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-int _getCount(List data){
-    if(_search == null){
+
+  int _getCount(List data) {
+    if (_search == null) {
       return data.length;
-    }else{
-      return data.length +1;
+    } else {
+      return data.length + 1;
     }
-}
+  }
+
   Widget _createGifTable(BuildContext context, AsyncSnapshot snapshot) {
     return GridView.builder(
         padding: EdgeInsets.all(10),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10
-        ),
+            crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10),
         itemCount: _getCount(snapshot.data["data"]),
-        itemBuilder: (context, index){
-          if(_search == null || index < snapshot.data["data"].length){
+        itemBuilder: (context, index) {
+          if (_search == null || index < snapshot.data["data"].length) {
             return GestureDetector(
-              child: Image.network(snapshot.data["data"][index]["images"]["fixed_height"]["url"]),
+              child: FadeInImage.memoryNetwork(
+                placeholder: kTransparentImage,
+                image: snapshot.data["data"][index]["images"]["fixed_height"]
+                    ["url"],
+                height: 300,
+                fit: BoxFit.cover,
+              ),
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            GifPage(snapshot.data["data"][index])));
+              },
+              onLongPress: () {
+                Share.share(snapshot.data["data"][index]["images"]
+                    ["fixed_height"]["url"]);
+              },
             );
-          }else{
+          } else {
             return Container(
               child: GestureDetector(
                 child: Column(
                   children: [
-                    Icon(Icons.add, color: Colors.white,size: 70,),
-                    Text("Carregar mais",
-                    style: TextStyle(color: Colors.white, fontSize: 22),)
+                    Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 70,
+                    ),
+                    Text(
+                      "Carregar mais",
+                      style: TextStyle(color: Colors.white, fontSize: 22),
+                    )
                   ],
                 ),
-                onTap: (){
+                onTap: () {
                   setState(() {
                     _offset += 19;
                   });
@@ -130,7 +156,6 @@ int _getCount(List data){
               ),
             );
           }
-
         });
   }
 }
